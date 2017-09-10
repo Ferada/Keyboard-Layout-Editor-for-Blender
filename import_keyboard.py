@@ -111,6 +111,8 @@ class Material:
             scn.render.engine = 'CYCLES'
 
     def make_material(self, name):
+        self.name = name
+
         matNames = []
         matPos = {}
         for position, material in enumerate(bpy.data.materials):
@@ -489,46 +491,53 @@ def read(filepath):
     bpy.context.window.cursor_set("DEFAULT")
     currentKey = 0
 
+    key_materials = {}
+
     # iterate over rows in keyboard
     for row in keyboard["rows"]:
         # iterate over keys in row
         for key in row:
             if key["d"] is False:
-                # new material for key
-                m = Material()
-                m.make_material("%s-%s" % (key["row"], key["col"]))
-
-                # make new diffuse node
-                diffuseBSDF = m.nodes['Diffuse BSDF']
-
                 # if key color is set convert hex to rgb and set diffuse color
                 # to that value, otherwise set it to rgba(0.8, 0.8, 0.8,
                 # 1)/#cccccc
                 if "c" in key:
                     c = key["c"]
                     rgb = hex2rgb(key["c"])
-                    diffuseBSDF.inputs["Color"].default_value = [
-                        rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1]
+                    color = (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1)
                 else:
-                    diffuseBSDF.inputs["Color"].default_value = [
-                        0.8, 0.8, 0.8, 1]
+                    color = (0.8, 0.8, 0.8, 1)
 
-                # add material output node
-                materialOutput = m.nodes['Material Output']
-                # add glossy node
-                glossyBSDF = m.makeNode('ShaderNodeBsdfGlossy', 'Glossy BSDF')
-                # set glossy node color to white and roughness to 0.3
-                glossyBSDF.inputs["Color"].default_value = [1, 1, 1, 1]
-                glossyBSDF.inputs["Roughness"].default_value = 0.3
-                # add mix node
-                mixShader = m.makeNode('ShaderNodeMixShader', 'Mix Shader')
-                # set mix node factor to 0.8
-                mixShader.inputs['Fac'].default_value = 0.8
-                # connect glossy and diffuse nodes to the mix node, and connect
-                # that to the material output
-                m.link(glossyBSDF, 'BSDF', mixShader, 1)
-                m.link(diffuseBSDF, 'BSDF', mixShader, 2)
-                m.link(mixShader, 'Shader', materialOutput, 'Surface')
+                if color not in key_materials:
+                    # new material for key
+                    m = Material()
+
+                    key_materials[color] = m
+
+                    m.make_material("%s-%s" % (key["row"], key["col"]))
+
+                    # make new diffuse node
+                    diffuseBSDF = m.nodes['Diffuse BSDF']
+                    diffuseBSDF.inputs["Color"].default_value = color
+
+                    # add material output node
+                    materialOutput = m.nodes['Material Output']
+                    # add glossy node
+                    glossyBSDF = m.makeNode('ShaderNodeBsdfGlossy', 'Glossy BSDF')
+                    # set glossy node color to white and roughness to 0.3
+                    glossyBSDF.inputs["Color"].default_value = [1, 1, 1, 1]
+                    glossyBSDF.inputs["Roughness"].default_value = 0.3
+                    # add mix node
+                    mixShader = m.makeNode('ShaderNodeMixShader', 'Mix Shader')
+                    # set mix node factor to 0.8
+                    mixShader.inputs['Fac'].default_value = 0.8
+                    # connect glossy and diffuse nodes to the mix node, and connect
+                    # that to the material output
+                    m.link(glossyBSDF, 'BSDF', mixShader, 1)
+                    m.link(diffuseBSDF, 'BSDF', mixShader, 2)
+                    m.link(mixShader, 'Shader', materialOutput, 'Surface')
+                else:
+                    m = key_materials[color]
 
                 new_obj_enter_mm = None
 
@@ -686,24 +695,15 @@ def read(filepath):
 
                     # set outcropping material to the material that was just
                     # created
-                    new_obj_enter_tl.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_tm.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_tr.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_ml.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_mm.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_mr.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_bl.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_bm.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
-                    new_obj_enter_br.active_material = bpy.data.materials[
-                        "%s-%s" % (key["row"], key["col"])]
+                    new_obj_enter_tl.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_tm.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_tr.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_ml.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_mm.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_mr.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_bl.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_bm.active_material = bpy.data.materials[m.name]
+                    new_obj_enter_br.active_material = bpy.data.materials[m.name]
 
                     # add outcropping to scene
                     scn.objects.link(new_obj_enter_tl)
@@ -809,24 +809,15 @@ def read(filepath):
                 new_obj_br.location[1] = key["y"] + 0.5 + key["h"] - 1
 
                 # set key material to the material that was just created
-                new_obj_tl.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_tm.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_tr.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_ml.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_mm.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_mr.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_bl.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_bm.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
-                new_obj_br.active_material = bpy.data.materials[
-                    "%s-%s" % (key["row"], key["col"])]
+                new_obj_tl.active_material = bpy.data.materials[m.name]
+                new_obj_tm.active_material = bpy.data.materials[m.name]
+                new_obj_tr.active_material = bpy.data.materials[m.name]
+                new_obj_ml.active_material = bpy.data.materials[m.name]
+                new_obj_mm.active_material = bpy.data.materials[m.name]
+                new_obj_mr.active_material = bpy.data.materials[m.name]
+                new_obj_bl.active_material = bpy.data.materials[m.name]
+                new_obj_bm.active_material = bpy.data.materials[m.name]
+                new_obj_br.active_material = bpy.data.materials[m.name]
 
                 # add key to scene
                 scn.objects.link(new_obj_tl)

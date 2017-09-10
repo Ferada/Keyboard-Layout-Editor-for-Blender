@@ -102,6 +102,8 @@ def hex2rgb(hex):
 
 
 class Material:
+    def __init__(self):
+        self.set_cycles()
 
     def set_cycles(self):
         scn = bpy.context.scene
@@ -494,7 +496,6 @@ def read(filepath):
             if key["d"] is False:
                 # new material for key
                 m = Material()
-                m.set_cycles()
                 m.make_material("%s-%s" % (key["row"], key["col"]))
 
                 # make new diffuse node
@@ -891,7 +892,6 @@ def read(filepath):
 
                         # new material for legend
                         m = Material()
-                        m.set_cycles()
                         m.make_material("legend: %s-%s" %
                                         (key["row"], key["col"]))
 
@@ -1126,7 +1126,6 @@ def read(filepath):
             currentKey += 1
 
     m = Material()
-    m.set_cycles()
     m.make_material("side")
 
     diffuseBSDF = m.nodes['Diffuse BSDF']

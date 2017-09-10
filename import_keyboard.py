@@ -47,36 +47,31 @@ with open(relative_file("fonts.json")) as f:
 
 
 def reorderLabels(labels, align):
-    ret = ["", "", "", "", "", "", "", "", "", "", "", ""]
+    ret = [""] * 12
     for pos, label in enumerate(labels):
         ret[labelMap[align][pos]] = label
     return ret
 
 
 def reorderSizes(default, individual, align):
-    ret = [default, default, default, default, default, default,
-           default, default, default, default, default, default]
+    ret = [default for _ in range(12)]
     if individual:
         for pos, size in enumerate(individual):
             if size == 0:
                 ret[labelMap[align][pos]] = default
             else:
                 ret[labelMap[align][pos]] = size
-    else:
-        ret = [default, default, default, default, default, default,
-               default, default, default, default, default, default]
     return ret
 
 
 def reorderColors(default, individual, align):
-    ret = [default, default, default, default, default, default,
-           default, default, default, default, default, default]
+    ret = [default for _ in range(12)]
     if len(individual) > 1:
         for pos, color in enumerate(individual):
             ret[labelMap[align][pos]] = color
     else:
-        ret = [individual[0], individual[0], individual[0], individual[0], individual[0], individual[
-            0], individual[0], individual[0], individual[0], individual[0], individual[0], individual[0]]
+        x = individual[0]
+        ret = [x for _ in range(12)]
     return ret
 
 # convert HEX color to RGB
@@ -538,6 +533,7 @@ def read(filepath):
                     m.link(mixShader, 'Shader', materialOutput, 'Surface')
                 else:
                     m = key_materials[color]
+                material = bpy.data.materials[m.name]
 
                 new_obj_enter_mm = None
 
@@ -693,43 +689,23 @@ def read(filepath):
                     new_obj_enter_br.location[1] = key[
                         "y2"] + 0.5 + key["h2"] - 1
 
+                    pieces = [new_obj_enter_tl, new_obj_enter_tm, new_obj_enter_tr, new_obj_enter_ml, new_obj_enter_mm, new_obj_enter_mr, new_obj_enter_bl, new_obj_enter_bm, new_obj_enter_br]
+
                     # set outcropping material to the material that was just
                     # created
-                    new_obj_enter_tl.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_tm.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_tr.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_ml.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_mm.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_mr.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_bl.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_bm.active_material = bpy.data.materials[m.name]
-                    new_obj_enter_br.active_material = bpy.data.materials[m.name]
-
                     # add outcropping to scene
-                    scn.objects.link(new_obj_enter_tl)
-                    scn.objects.link(new_obj_enter_tm)
-                    scn.objects.link(new_obj_enter_tr)
-                    scn.objects.link(new_obj_enter_ml)
-                    scn.objects.link(new_obj_enter_mm)
-                    scn.objects.link(new_obj_enter_mr)
-                    scn.objects.link(new_obj_enter_bl)
-                    scn.objects.link(new_obj_enter_bm)
-                    scn.objects.link(new_obj_enter_br)
+                    for piece in pieces:
+                        piece.active_material = material
+                        scn.objects.link(piece)
 
                     # deselect everything
                     for obj in scn.objects:
                         obj.select = False
 
                     # combine all the pieces
-                    new_obj_enter_tl.select = True
-                    new_obj_enter_tm.select = True
-                    new_obj_enter_tr.select = True
-                    new_obj_enter_ml.select = True
-                    new_obj_enter_mm.select = True
-                    new_obj_enter_mr.select = True
-                    new_obj_enter_bl.select = True
-                    new_obj_enter_bm.select = True
-                    new_obj_enter_br.select = True
+                    for piece in pieces:
+                        piece.select = True
+
                     scn.objects.active = new_obj_enter_mm
                     bpy.ops.object.join()
 
@@ -808,42 +784,22 @@ def read(filepath):
                 new_obj_br.location[0] = (key["x"]) * -1 - 0.5 - (key["w"] - 1)
                 new_obj_br.location[1] = key["y"] + 0.5 + key["h"] - 1
 
-                # set key material to the material that was just created
-                new_obj_tl.active_material = bpy.data.materials[m.name]
-                new_obj_tm.active_material = bpy.data.materials[m.name]
-                new_obj_tr.active_material = bpy.data.materials[m.name]
-                new_obj_ml.active_material = bpy.data.materials[m.name]
-                new_obj_mm.active_material = bpy.data.materials[m.name]
-                new_obj_mr.active_material = bpy.data.materials[m.name]
-                new_obj_bl.active_material = bpy.data.materials[m.name]
-                new_obj_bm.active_material = bpy.data.materials[m.name]
-                new_obj_br.active_material = bpy.data.materials[m.name]
+                pieces = [new_obj_tl, new_obj_tm, new_obj_tr, new_obj_ml, new_obj_mm, new_obj_mr, new_obj_bl, new_obj_bm, new_obj_br]
 
+                # set key material to the material that was just created
                 # add key to scene
-                scn.objects.link(new_obj_tl)
-                scn.objects.link(new_obj_tm)
-                scn.objects.link(new_obj_tr)
-                scn.objects.link(new_obj_ml)
-                scn.objects.link(new_obj_mm)
-                scn.objects.link(new_obj_mr)
-                scn.objects.link(new_obj_bl)
-                scn.objects.link(new_obj_bm)
-                scn.objects.link(new_obj_br)
+                for piece in pieces:
+                    piece.active_material = material
+                    scn.objects.link(piece)
 
                 # deselect everything
                 for obj in scn.objects:
                     obj.select = False
 
                 # combine all the pieces
-                new_obj_tl.select = True
-                new_obj_tm.select = True
-                new_obj_tr.select = True
-                new_obj_ml.select = True
-                new_obj_mm.select = True
-                new_obj_mr.select = True
-                new_obj_bl.select = True
-                new_obj_bm.select = True
-                new_obj_br.select = True
+                for piece in pieces:
+                    piece.select = True
+
                 # if outcropping exists add it to the key
                 if new_obj_enter_mm is not None:
                     new_obj_enter_mm.select = True
@@ -1119,6 +1075,8 @@ def read(filepath):
     m = Material()
     m.make_material("side")
 
+    material = bpy.data.materials["side"]
+
     diffuseBSDF = m.nodes['Diffuse BSDF']
 
     # set case color if it is defined, otherwise set it to white
@@ -1146,23 +1104,23 @@ def read(filepath):
     side1 = side.copy()
     side1.data = side.data.copy()
     side1.animation_data_clear()
-    side1.active_material = bpy.data.materials["side"]
+    side1.active_material = material
     side2 = side.copy()
     side2.data = side.data.copy()
     side2.animation_data_clear()
-    side2.active_material = bpy.data.materials["side"]
+    side2.active_material = material
     side3 = side.copy()
     side3.data = side.data.copy()
     side3.animation_data_clear()
-    side3.active_material = bpy.data.materials["side"]
+    side3.active_material = material
     side4 = side.copy()
     side4.data = side.data.copy()
     side4.animation_data_clear()
-    side4.active_material = bpy.data.materials["side"]
+    side4.active_material = material
     side5 = side.copy()
     side5.data = side.data.copy()
     side5.animation_data_clear()
-    side5.active_material = bpy.data.materials["side"]
+    side5.active_material = material
 
     # set case pieces size and location and add them to the scene
     side1.location = (0.1, height / 2, 0)

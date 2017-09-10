@@ -487,6 +487,7 @@ def read(filepath):
     currentKey = 0
 
     key_materials = {}
+    legend_materials = {}
 
     # iterate over rows in keyboard
     for row in keyboard["rows"]:
@@ -838,29 +839,30 @@ def read(filepath):
                     # TODO: handle front labels
                     if label != "" and pos <= 8:
 
-                        # new material for legend
-                        m = Material()
-                        m.make_material("legend: %s-%s" %
-                                        (key["row"], key["col"]))
-
                         if "t" in key and key["t"][pos] != None and "led" in keyboard and hex2rgb(key["t"][pos]) == keyboard["led"]:
-                            # make new emission node
-                            emission = m.makeNode(
-                                'ShaderNodeEmission', 'Emission')
-                            # set legend color
-                            emission.inputs["Color"].default_value = [
-                                keyboard["led"][0] / 255, keyboard["led"][1] / 255, keyboard["led"][2] / 255, 1]
-                            emission.inputs[
-                                "Strength"].default_value = keyboard["led"][3] * 5
+                            if color not in legend_materials:
+                                color = (keyboard["led"][0] / 255, keyboard["led"][1] / 255, keyboard["led"][2] / 255, 1, keyboard["led"][3] * 5)
 
-                            # add material output node
-                            materialOutput = m.nodes['Material Output']
-                            # attach emission to material output
-                            m.link(emission, 'Emission',
-                                   materialOutput, 'Surface')
+                                # new material for legend
+                                m = Material()
+
+                                legend_materials[color] = m
+
+                                m.make_material("legend: %s-%s" % (key["row"], key["col"]))
+
+                                # make new emission node
+                                emission = m.makeNode('ShaderNodeEmission', 'Emission')
+                                # set legend color
+                                emission.inputs["Color"].default_value = color[0:3]
+                                emission.inputs["Strength"].default_value = color[3]
+
+                                # add material output node
+                                materialOutput = m.nodes['Material Output']
+                                # attach emission to material output
+                                m.link(emission, 'Emission', materialOutput, 'Surface')
+                            else:
+                                m = legend_materials[color]
                         else:
-                            # make new diffuse node
-                            diffuseBSDF = m.nodes['Diffuse BSDF']
                             # if legend color is set convert hex to rgb and set diffuse color
                             # to that value, otherwise set it to rgba(0.8, 0.8, 0.8,
                             # 1)/#cccccc
@@ -868,39 +870,44 @@ def read(filepath):
                                 if len(key["t"]) > 1:
                                     c = key["t"][pos]
                                     rgb = hex2rgb(key["t"][pos])
-                                    diffuseBSDF.inputs["Color"].default_value = [
-                                        rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1]
+                                    color = (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1)
                                 else:
                                     c = key["t"][0]
                                     rgb = hex2rgb(key["t"][pos])
-                                    diffuseBSDF.inputs["Color"].default_value = [
-                                        rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1]
+                                    color = (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1)
                             else:
-                                diffuseBSDF.inputs["Color"].default_value = [
-                                    0, 0, 0, 1]
+                                color = (0, 0, 0, 1)
 
-                            # add material output node
-                            materialOutput = m.nodes['Material Output']
-                            # add glossy node
-                            glossyBSDF = m.makeNode(
-                                'ShaderNodeBsdfGlossy', 'Glossy BSDF')
-                            # set glossy node color to white and roughness to
-                            # 0.3
-                            glossyBSDF.inputs[
-                                "Color"].default_value = [1, 1, 1, 1]
-                            glossyBSDF.inputs[
-                                "Roughness"].default_value = 0.3
-                            # add mix node
-                            mixShader = m.makeNode(
-                                'ShaderNodeMixShader', 'Mix Shader')
-                            # set mix node factor to 0.8
-                            mixShader.inputs['Fac'].default_value = 0.8
-                            # connect glossy and diffuse nodes to the mix node, and connect
-                            # that to the material output
-                            m.link(glossyBSDF, 'BSDF', mixShader, 1)
-                            m.link(diffuseBSDF, 'BSDF', mixShader, 2)
-                            m.link(mixShader, 'Shader',
-                                   materialOutput, 'Surface')
+                            if color not in legend_materials:
+                                # new material for legend
+                                m = Material()
+
+                                legend_materials[color] = m
+
+                                m.make_material("legend: %s-%s" % (key["row"], key["col"]))
+
+                                # make new diffuse node
+                                diffuseBSDF = m.nodes['Diffuse BSDF']
+                                diffuseBSDF.inputs["Color"].default_value = color
+
+                                # add material output node
+                                materialOutput = m.nodes['Material Output']
+                                # add glossy node
+                                glossyBSDF = m.makeNode('ShaderNodeBsdfGlossy', 'Glossy BSDF')
+                                # set glossy node color to white and roughness to 0.3
+                                glossyBSDF.inputs["Color"].default_value = [1, 1, 1, 1]
+                                glossyBSDF.inputs["Roughness"].default_value = 0.3
+                                # add mix node
+                                mixShader = m.makeNode('ShaderNodeMixShader', 'Mix Shader')
+                                # set mix node factor to 0.8
+                                mixShader.inputs['Fac'].default_value = 0.8
+                                # connect glossy and diffuse nodes to the mix node, and connect
+                                # that to the material output
+                                m.link(glossyBSDF, 'BSDF', mixShader, 1)
+                                m.link(diffuseBSDF, 'BSDF', mixShader, 2)
+                                m.link(mixShader, 'Shader', materialOutput, 'Surface')
+                            else:
+                                m = legend_materials[color]
 
                         alignText = [
                             ["LEFT", "TOP"],
@@ -960,8 +967,7 @@ def read(filepath):
                             new_label.modifiers[
                                 "Shrinkwrap"].target = new_obj_mm
                             new_label.to_mesh(scn, True, "PREVIEW")
-                            new_label.active_material = bpy.data.materials[
-                                "legend: %s-%s" % (key["row"], key["col"])]
+                            new_label.active_material = bpy.data.materials[m.name]
                             bpy.ops.object.convert(target='MESH')
                             for edge in bpy.context.object.data.edges:
                                 edge.crease = 1
@@ -1006,8 +1012,7 @@ def read(filepath):
                             new_label.modifiers[
                                 "Shrinkwrap"].target = new_obj_mm
                             new_label.to_mesh(scn, True, "PREVIEW")
-                            new_label.active_material = bpy.data.materials[
-                                "legend: %s-%s" % (key["row"], key["col"])]
+                            new_label.active_material = bpy.data.materials[m.name]
                             bpy.ops.object.convert(target='MESH')
                             for edge in bpy.context.object.data.edges:
                                 edge.crease = 1

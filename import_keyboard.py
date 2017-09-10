@@ -861,7 +861,7 @@ def read(filepath):
 
                 # add key switch
                 new_switch = bpy.data.objects["switch"].copy()
-                new_switch.data = bpy.data.objects["switch"].data.copy()
+                new_switch.data = bpy.data.objects["switch"].data
                 new_switch.animation_data_clear()
                 new_switch.location[0] = (key["x"]) * -1 - (key["w"]) / 2
                 new_switch.location[1] = key["y"] + key["h"] / 2
@@ -871,7 +871,7 @@ def read(filepath):
                 if "led" in keyboard:
                     # add led
                     new_led = bpy.data.objects["led"].copy()
-                    new_led.data = bpy.data.objects["led"].data.copy()
+                    new_led.data = bpy.data.objects["led"].data
                     new_led.animation_data_clear()
                     new_led.location[0] = (key["x"]) * -1 - (key["w"]) / 2
                     new_led.location[1] = key["y"] + key["h"] / 2

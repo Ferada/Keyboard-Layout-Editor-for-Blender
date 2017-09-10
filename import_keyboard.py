@@ -489,6 +489,15 @@ def read(filepath):
     key_materials = {}
     legend_materials = {}
 
+    bpy.ops.group.create(name="keys")
+    key_group = bpy.data.groups["keys"]
+
+    bpy.ops.group.create(name="switches")
+    switch_group = bpy.data.groups["switches"]
+
+    bpy.ops.group.create(name="leds")
+    led_group = bpy.data.groups["leds"]
+
     # iterate over rows in keyboard
     for row in keyboard["rows"]:
         # iterate over keys in row
@@ -816,6 +825,8 @@ def read(filepath):
                     new_obj_mm.name = HTMLParser().unescape(
                         key["v"]["raw"].replace("\n", " "))
 
+                key_group.objects.link(new_obj_mm)
+
                 # add key switch
                 new_switch = bpy.data.objects["switch"].copy()
                 new_switch.data = bpy.data.objects["switch"].data
@@ -823,6 +834,7 @@ def read(filepath):
                 new_switch.location[0] = (key["x"]) * -1 - (key["w"]) / 2
                 new_switch.location[1] = key["y"] + key["h"] / 2
                 scn.objects.link(new_switch)
+                switch_group.objects.link(new_switch)
                 new_switch.name = "switch: %s-%s" % (key["row"], key["col"])
 
                 if "led" in keyboard:
@@ -833,6 +845,7 @@ def read(filepath):
                     new_led.location[0] = (key["x"]) * -1 - (key["w"]) / 2
                     new_led.location[1] = key["y"] + key["h"] / 2
                     scn.objects.link(new_led)
+                    led_group.objects.link(new_led)
                     new_led.name = "led: %s-%s" % (key["row"], key["col"])
 
                 for pos, label in enumerate(key["v"]["labels"]):

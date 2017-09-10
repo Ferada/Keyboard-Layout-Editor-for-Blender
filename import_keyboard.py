@@ -32,15 +32,16 @@ labelMap = [
     [4, -1, -1, -1, 10, -1, -1, -1, -1, -1, -1, -1],  # 7 = center front & x & y
 ]
 
-gotham = bpy.data.fonts.load(os.path.join(os.path.dirname(
-    __file__), "gotham.ttf"))
-noto = bpy.data.fonts.load(os.path.join(os.path.dirname(
-    __file__), "noto.ttf"))
+def relative_file(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
+
+gotham = bpy.data.fonts.load(relative_file("gotham.ttf"))
+noto = bpy.data.fonts.load(relative_file("noto.ttf"))
 
 fonts = [None for i in range(0, 12)]
 
-googleFonts = json.load(open(os.path.join(os.path.dirname(
-    __file__), "fonts.json")))
+with open(relative_file("fonts.json")) as f:
+    googleFonts = json.load(f)
 
 # Function to parse legends
 
@@ -146,8 +147,9 @@ class Material:
 
 def getKey(filePath):
     # load JSON file
-    layout = json.load(open(filePath, encoding="UTF-8",
-                            errors="replace"), strict=False)
+    with open(filePath, encoding="UTF-8", errors="replace") as f:
+        layout = json.load(f, strict=False)
+
     # make empty keyboard dict
     keyboard = {}
     rowData = {}
@@ -410,8 +412,7 @@ def read(filepath):
     defaultObjects = ["DCSTL", "DCSTM", "DCSTR", "DCSML", "DCSMM", "DCSMR", "DCSBL", "DCSBM", "DCSBR", "DCSTLF", "DCSTMF", "DCSTRF", "DCSMLF", "DCSMMF", "DCSMRF", "DCSBLF", "DCSBMF", "DCSBRF", "DCSTLS", "DCSTMS", "DCSTRS", "DCSMLS", "DCSMMS", "DCSMRS", "DCSBLS", "DCSBMS", "DCSBRS",
                       "DSATL", "DSATM", "DSATR", "DSAML", "DSAMM", "DSAMR", "DSABL", "DSABM", "DSABR", "DSATLF", "DSATMF", "DSATRF", "DSAMLF", "DSAMMF", "DSAMRF", "DSABLF", "DSABMF", "DSABRF", "DSATLS", "DSATMS", "DSATRS", "DSAMLS", "DSAMMS", "DSAMRS", "DSABLS", "DSABMS", "DSABRS", "side", "switch", "led"]
     # blender file with template objects
-    templateBlend = os.path.join(os.path.dirname(
-        __file__), "template.blend", "Object")
+    templateBlend = os.path.join(relative_file("template.blend"), "Object")
 
     # append all the template objects
     for key in defaultObjects:

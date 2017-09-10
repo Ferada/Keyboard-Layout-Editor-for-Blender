@@ -835,7 +835,8 @@ def read(filepath):
                     new_led.name = "led: %s-%s" % (key["row"], key["col"])
 
                 for pos, label in enumerate(key["v"]["labels"]):
-                    if label != "":
+                    # TODO: handle front labels
+                    if label != "" and pos <= 8:
 
                         # new material for legend
                         m = Material()

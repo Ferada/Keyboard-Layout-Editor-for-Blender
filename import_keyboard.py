@@ -148,11 +148,11 @@ def getKey(filePath):
         layout = json.load(f, strict=False)
 
     # make empty keyboard dict
-    keyboard = {}
+    keyboard = {
+        "rows": [],
+        "keyCount": 0
+    }
     rowData = {}
-    # add list of keyboard rows
-    keyboard["rows"] = []
-    keyboard["keyCount"] = 0
     y = 0 + 0.05
     # default align
     align = 4
@@ -399,12 +399,32 @@ def getKey(filePath):
     return keyboard
 
 
+alignText = [
+    ["LEFT", "TOP"],
+    ["CENTER", "TOP"],
+    ["RIGHT", "TOP"],
+    ["LEFT", "CENTER"],
+    ["CENTER", "CENTER"],
+    ["RIGHT", "CENTER"],
+    ["LEFT", "BOTTOM"],
+    ["CENTER", "BOTTOM"],
+    ["RIGHT", "BOTTOM"]
+]
+
+
+# adjust legends based on keycap type
+def alignLegendsProfile(p):
+    return {
+        "DCS": [0.25, 0.15, 0.25, 0.325],
+        "DSA": [0.2, 0.25, 0.2, 0.25]
+    }.get(p, [0.25, 0.15, 0.25, 0.325])
+
+
 def process_key(key, key_materials, legend_materials, key_group, switch_group, led_group, scn, keyboard, width, height):
     # if key color is set convert hex to rgb and set diffuse color
     # to that value, otherwise set it to rgba(0.8, 0.8, 0.8,
     # 1)/#cccccc
     if "c" in key:
-        c = key["c"]
         rgb = hex2rgb(key["c"])
         color = (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1)
     else:
@@ -778,11 +798,9 @@ def process_key(key, key_materials, legend_materials, key_group, switch_group, l
                 # 1)/#cccccc
                 if "t" in key and key["t"][pos] != None:
                     if len(key["t"]) > 1:
-                        c = key["t"][pos]
                         rgb = hex2rgb(key["t"][pos])
                         color = (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1)
                     else:
-                        c = key["t"][0]
                         rgb = hex2rgb(key["t"][pos])
                         color = (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1)
                 else:
@@ -818,25 +836,6 @@ def process_key(key, key_materials, legend_materials, key_group, switch_group, l
                     m.link(mixShader, 'Shader', materialOutput, 'Surface')
                 else:
                     m = legend_materials[color]
-
-            alignText = [
-                ["LEFT", "TOP"],
-                ["CENTER", "TOP"],
-                ["RIGHT", "TOP"],
-                ["LEFT", "CENTER"],
-                ["CENTER", "CENTER"],
-                ["RIGHT", "CENTER"],
-                ["LEFT", "BOTTOM"],
-                ["CENTER", "BOTTOM"],
-                ["RIGHT", "BOTTOM"]
-            ]
-
-            # adjust legends based on keycap type
-            def alignLegendsProfile(p):
-                return {
-                    "DCS": [0.25, 0.15, 0.25, 0.325],
-                    "DSA": [0.2, 0.25, 0.2, 0.25]
-                }.get(p, [0.25, 0.15, 0.25, 0.325])
 
             try:
                 # add text
@@ -1127,8 +1126,7 @@ def read(filepath):
 
     # set case color if it is defined, otherwise set it to white
     if "backcolor" in keyboard:
-        c = keyboard["backcolor"]
-        rgb = hex2rgb(c)
+        rgb = hex2rgb(keyboard["backcolor"])
         diffuseBSDF.inputs["Color"].default_value = [
             rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1]
     else:

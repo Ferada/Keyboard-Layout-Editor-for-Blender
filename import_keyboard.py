@@ -986,6 +986,32 @@ def process_key(key, key_materials, legend_materials, key_group, switch_group, l
         height = key["y"] + key["h"] + 0.05
 
 
+def stem_color(keyboard):
+    default = [0, 0.7, 1, 1]
+
+    if "switchType" not in keyboard:
+        return default
+
+    switchType = keyboard["switchType"]
+
+    if switchType in ("MX1A-11xx", "KS-3-Black"):
+        return [0, 0, 0, 1]
+    elif switchType == "MX1A-A1xx":
+        return [1, 1, 1, 1]
+    elif switchType in ("MX1A-C1xx", "KS-3-White"):
+        return [1, 1, 1, 0.8]
+    elif switchType == "MX1A-E1xx":
+        return [0, 0.7, 1, 1]
+    elif switchType in ("MX1A-F1xx", "KS-3-Green"):
+        return [0, 0.6, 0.25, 1]
+    elif switchType in ("MX1A-G1xx", "KS-3-Tea"):
+        return [0.6, 0.3, 0, 1]
+    elif switchType in ("MX1A-L1xx", "KS-3-Red"):
+        return [1, 0, 0, 1]
+
+    return default
+
+
 def read(filepath):
     bpy.context.window.cursor_set("WAIT")
     # parse raw data into dict
@@ -1200,28 +1226,7 @@ def read(filepath):
                        offset_type='OFFSET', segments=5)
     bpy.ops.object.mode_set(mode='OBJECT')
 
-    if "switchType" in keyboard:
-        if keyboard["switchType"] == "MX1A-11xx" or keyboard["switchType"] == "KS-3-Black":
-            stemColor = [0, 0, 0, 1]
-        elif keyboard["switchType"] == "MX1A-A1xx":
-            stemColor = [1, 1, 1, 1]
-        elif keyboard["switchType"] == "MX1A-C1xx" or keyboard["switchType"] == "KS-3-White":
-            stemColor = [1, 1, 1, 0.8]
-        elif keyboard["switchType"] == "MX1A-E1xx":
-            stemColor = [0, 0.7, 1, 1]
-        elif keyboard["switchType"] == "MX1A-F1xx" or keyboard["switchType"] == "KS-3-Green":
-            stemColor = [0, 0.6, 0.25, 1]
-        elif keyboard["switchType"] == "MX1A-G1xx" or keyboard["switchType"] == "KS-3-Tea":
-            stemColor = [0.6, 0.3, 0, 1]
-        elif keyboard["switchType"] == "MX1A-L1xx" or keyboard["switchType"] == "KS-3-Red":
-            stemColor = [1, 0, 0, 1]
-        else:
-            stemColor = [0, 0.7, 1, 1]
-    else:
-        stemColor = [0, 0.7, 1, 1]
-
-    bpy.data.materials["Stem"].node_tree.nodes[
-        "Diffuse BSDF"].inputs["Color"].default_value = stemColor
+    bpy.data.materials["Stem"].node_tree.nodes["Diffuse BSDF"].inputs["Color"].default_value = stem_color(keyboard)
 
     if "led" in keyboard:
         bpy.data.materials["led"].node_tree.nodes["Emission"].inputs["Color"].default_value = [
